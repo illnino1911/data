@@ -32,6 +32,45 @@ var fps = 0;
 var fpsCount = 0;
 var fpsTime = 0;
 
+function initialize(input_level) 
+{
+	var return_cells = [];
+	
+	for (var layerIdx = 0; layerIdx < LAYER_COUNT; layerIdx++) 
+	{
+		return_cells[layerIdx] = [];
+		var idx = 0;
+		for(var y = 0; y < input_level.layers[layerIdx].height; y++) 
+		{
+			return_cells[layerIdx][y] = [];
+			for(var x = 0; x < input_level.layers[layerIdx].width; x++) 
+			{
+				if(input_level.layers[layerIdx].data[idx] !=0) 
+				{
+					return_cells[layerIdx][y][x] = 1;
+					return_cells[layerIdx][y][x+1] = 1;		
+					if (y != 0)
+					{
+						return_cells[layerIdx][y-1][x] = 1;
+						return_cells[layerIdx][y-1][x+1] = 1;
+					}
+				} 
+				else if (return_cells[layerIdx][y][x] != 1)
+				{
+					return_cells[layerIdx][y][x] = 0; // if we haven't set this cell's value, then set it to 0 now
+				}
+				idx++;
+
+			}
+
+		} 
+
+	}
+	return return_cells;
+}
+		
+var cells = initialize(level);
+		
 // load an image to draw
 var chuckNorris = document.createElement("img");
 chuckNorris.src = "hero.png";
@@ -40,18 +79,47 @@ var keyboard = new keyboard();
 var player = new player(); 
 
 
+function runGameOver(deltaTime)
+{
+	context.fillStyle = "red";
+	context.font="50px Andy";
+	context.fillText("GAME OVER", canvas.width - 950,150);
+	context.fillText("press Enter to play again", canvas.width - 1050,200);
+	
+	context.fillStyle = "#00ff00";
+	context.font="32px Algerian";
+	var scoreText = "highScore: " + score;
+	context.fillText(scoreText, canvas.width - 1600, 35);
+}
+
+var cam_x
+var cam_y
+
 function run()
 {
 	context.fillStyle = "#ccc";		
 	context.fillRect(0, 0, canvas.width, canvas.height);
 	
+	cam_x = player.x - SCREEN_WIDTH/2;
+	cam_y = player.y - SCREEN_HEIGHT/2;
 	
+	if (cam_x < 0)
+		cam_x = 0;
+	if (cam_y < 0)
+		cam_y = 0;
+		
+	if (cam_x > MAP.tw * TILE - SCREEN_WIDTH)
+		cam_x = MAP.tw * TILE - SCREEN_WIDTH;
+	if	(cam_y > MAP.th * TILE - SCREEN_HEIGHT)
+		cam_y = MAP.th * TILE - SCREEN_HEIGHT;
+	
+	drawMap(cam_x, cam_y);
 	
 	var deltaTime = getDeltaTime();
 	
 	//context.drawImage(chuckNorris, SCREEN_WIDTH/2 - chuckNorris.width/2, SCREEN_HEIGHT/2 - chuckNorris.height/2);
 	player.update(deltaTime);
-	player.draw();
+	player.draw(cam_x, cam_y);
 		
 	// update the frame counter 
 	fpsTime += deltaTime;

@@ -1,41 +1,42 @@
 var keyboard = function ()
 {
+	
 	var self = this;
 	
 	window.addEventListener('keydown', 
-	function(evt) { self.onkeydown(evt); }, false);
+	function(evt) { self.onKeyDOWN(evt); }, false);
 	
 	window.addEventListener('keyup',
-	function(evt) { self.onkeyUp(evt); }, false);			
+	function(evt) { self.onKeyUP(evt); }, false);			
 
 	this.keylisteners = new Array();
 	this.keys = new Array();
 	
 	
-	this.key_space = 32;
-	this.key_left = 37;
-	this.key_up = 38;
-	this.key_right = 39;
-	this.key_down = 40;
+	this.KEY_SPACE = 32;
+	this.KEY_LEFT = 37;
+	this.KEY_UP = 38;
+	this.KEY_RIGHT = 39;
+	this.KEY_DOWN = 40;
 	
-	this.key_a = 65;
-	this.key_d = 68;
-	this.key_w = 83;
-	this.key_s = 87;
-	this.key_shift = 16;
+	this.KEY_A = 65;
+	this.KEY_D = 68;
+	this.KEY_S = 83;
+	this.KEY_W = 87;
+	this.KEY_SHIFT = 16;
 }
 
-keyboard.prototype.onkeydown = function(evt)
+keyboard.prototype.onKeyDOWN = function(evt)
 {
 	this.keys[evt.keyCode] = true;
 };
 
-keyboard.prototype.onkeyUp = function(evt)
+keyboard.prototype.onKeyUP = function(evt)
 {
 	this.keys[evt.keyCode] = false;
 };
 
-keyboard.prototype.iskeyDown = function(keyCode)
+keyboard.prototype.isKeyDOWN = function(keyCode)
 {
 	return this.keys[keyCode];
 };

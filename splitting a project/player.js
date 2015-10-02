@@ -1,38 +1,147 @@
+
+var METER = TILE;
+
+var GRAVITY = METER * 9.8 * 6;
+
+var MAXDX = METER * 10;
+var MAXDY = METER * 15;
+
+var ACCEL = MAXDX * 2;
+var FRICTION = MAXDX * 6;
+
+var JUMP = METER * 3500;
+
 var player = function()
 {
 	this.image= document.createElement("img");
-	this.x= canvas.width/2;
-	this.y= canvas.height/2;
+	
+	this.x = 0 * TILE;
+	this.y = 0 * TILE;
+	
 	this.width= 159;
 	this.height= 163;
-	this.velocityX= 0;
-	this.velocityY= 0;
-	this.angularVelocity= 0;
-	this.rotation= 0;
+	
+	this.velocity_x = 0;
+	this.velocity_y = 0;
+	
+	this.falling = true;
+	this.jumping = true;
 	
 	this.image.src= "hero.png";
 };
 
 player.prototype.update = function(deltaTime)
 {
-	if( typeof(this.rotation) == "undefined" )
-		this.rotation = 0;
-		
-	if(keyboard.iskeyDown(keyboard.key_space) == true)
+	var left = false;
+	var right = false;
+	var jump = false;
+	
+	if (keyboard.isKeyDOWN(keyboard.KEY_LEFT)) 
 	{
-		this.rotation -= deltaTime;
+		left = true;
 	}
-	else
+	if (keyboard.isKeyDOWN(keyboard.KEY_RIGHT)) 
 	{
-		this.rotation += deltaTime;
+		right = true;
+	}	
+	if (keyboard.isKeyDOWN(keyboard.KEY_SPACE)) 
+	{
+		jump = true;
+	}	
+	
+	var wasleft = this.velocity_x < 0;
+	var wasright = this.velocity_x > 0;
+	var falling = this.falling;
+	var ddx = 0;
+	var ddy = GRAVITY;
+	
+	if (left)
+		ddx = ddx - ACCEL; 
+	else if (wasleft)
+		ddx = ddx + FRICTION; 
+		
+	if (right)
+		ddx = ddx + FRICTION;
+	else if (wasright)
+		ddx = ddx - FRICTION;
+		
+	if (jump && !this.jumping && !falling) 
+	{
+		ddy = ddy - JUMP; 
+		this.jumping = true;
+	}
+
+	this.y = Math.floor(this.y + (deltaTime * this.velocity_y));
+	this.x = Math.floor(this.x + (deltaTime * this.velocity_x));
+	
+	this.velocity_x = bound(this.velocity_x + (deltaTime * ddx), -MAXDX, MAXDX);
+	this.velocity_y = bound(this.velocity_y + (deltaTime * ddy), -MAXDY, MAXDY);
+	
+	if ((wasleft && (this.velocity_x > 0)) ||
+	   ((wasright && (this.velocity_x < 0))))
+	{
+		this.velocity_x = 0;
+	}
+	
+	var tx = pixelToTile(this.x);
+	var ty = pixelToTile(this.y);
+	var nx = (this.x) % TILE;
+	var ny = (this.y) % TILE;
+	
+	var cell = cellAtTileCoord(LAYER_PLATFORMS, tx, ty);
+	var cellright = cellAtTileCoord(LAYER_PLATFORMS, tx + 1, ty);
+	var celldown = cellAtTileCoord(LAYER_PLATFORMS, tx, ty + 1);
+	var celldiag = cellAtTileCoord(LAYER_PLATFORMS, tx + 1, ty + 1);
+	
+	if (this.velocity_y > 0) 
+	{
+		if ((celldown && !cell) || (celldiag && !cellright && nx)) 
+		{
+			this.y = tileToPixel(ty);
+			this.velocity_y = 0; 
+			this.falling = false;
+			this.jumping = false; 
+			ny = 0; 
+		}
+	}
+	else if (this.velocity_y < 0) 
+	{
+		if ((cell && !celldown) || (cellright && !celldiag && nx)) 
+		{
+			this.y = tileToPixel(ty + 1); 
+			this.velocity_y = 0; 
+			cell = celldown; 
+			cellright = celldiag;	 
+			ny = 0; 
+		}
+	}
+
+	if (this.velocity_x > 0) 
+	{
+		if ((cellright && !cell) || (celldiag && !celldown && ny)) 
+		{
+			this.velocity_x = 0; 
+			this.x = tileToPixel(tx);
+		}
+	}
+	
+	else if (this.velocity_x < 0) 
+	{
+		if ((cell && !cellright) || (celldown && !celldiag && ny)) 
+		{
+			this.x = tileToPixel(tx + 1); 
+			this.velocity_x = 0; 
+		}
 	}
 }
-
-player.prototype.draw = function()
+	
+	
+	
+	
+player.prototype.draw = function(_cam_x, _cam_y)
 {
 	context.save();
-		context.translate(this.x, this.y);
-			context.rotate(this.rotation);
+		context.translate(this.x - _cam_x, this.y - _cam_y);
 			context.drawImage(this.image, -this.width/2, -this.height/2);
 		context.restore();
 }
